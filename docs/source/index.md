@@ -1,11 +1,11 @@
 ![header img](header_img_large.png)
 
 ## About
-Liberate your forms with libreForms, an open form manager API written in Python for organizations. 
+Liberate your forms with <code>libreForms-flask</code>, a web-based implementation of the [libreForms form manager API specification](https://github.com/libreForms/spec/blob/main/spec.md). 
 
 Competing browser-based form managers give form administrators little control over form fields, the resulting data, or the underlying web application. Likewise, few proprietary options provide both self-hosting support and a viable licensing model.
 
-The libreForms project, first and foremost, defines a simple but highly extensible abstraction layer that matches form fields to data structures. On top of this specification, it builds a highly configurable browser-based application and a document-oriented database. In short, the platform allows you to do anything, host anywhere, and control everything about your internal form management system.
+The libreForms project, first and foremost, defines a simple but highly extensible abstraction layer that matches form fields to data structures. On top of this specification, <code>libreForms-flask</code> provides a highly configurable browser-based application and a document-oriented database. In short, the platform allows you to do anything, host anywhere, and control everything about your internal form management system.
 
 ![abstraction layer](libreForms_abstraction_layer.drawio.svg)
 
@@ -28,27 +28,32 @@ While the libreForms abstraction layer does not proscribe a system for classifyi
 
 ### Architecture
 
-libreForms is meant to run within an enterprise's intranet behind a reverse proxy. It does not currently support high availability, but does spawn multiple workers on the system upon which it is deployed. See this [discussion](https://github.com/signebedi/libreForms/issues/43) about accounting for enterprise requirements. 
+libreForms-flask is meant to run within an enterprise's intranet behind a reverse proxy. It does not currently support high availability, but does spawn multiple workers on the system upon which it is deployed. See this [discussion](https://github.com/libreForms/libreForms-flask/issues/43) about accounting for enterprise requirements. 
 
-While intended primarily for internal use, libreForms provides out-of-the-box support for external-facing, anonymous forms. These forms employ signed URLs, rather than local authentication, to control access to forms. These are intended to also run behind a reverse proxy that points to whatever external network (eg. the internet or another organization's network) you'd like to provide access. 
+While intended primarily for internal use, libreForms-flask provides out-of-the-box support for external-facing, anonymous forms. These forms employ signed URLs, rather than local authentication, to control access to forms. These are intended to also run behind a reverse proxy that points to whatever external network (eg. the internet or another organization's network) you'd like to provide access. 
 
 Here is an example diagram for such a deployment:
 
 ![example architecture](libreForms_with_reverse_proxy.drawio.svg)
 
 ### Features
-- a form-building specification based on Python dictionaries
-- a flask web application (http://x.x.x.x:8000/) that will work well behind most standard reverse-proxies & ships with the following features:
-    - plotly dashboards for data visualization
-    - a document-oriented database to store form data 
-    - basic local authentication
-    - user groups and routing lists for form review, approval, and notifications
-    - database lookups in form fields
-    - \[future\] external identity providers
+- implements the [libreForms spec](https://github.com/libreForms/spec/blob/main/spec.md) using Python dictionaries
+- a flask web application that will work well behind most standard reverse-proxies 
+- plotly dashboards for data visualization
+- a document-oriented database to store form data 
+- basic local authentication
+- user groups and routing lists for form review, approval, and notifications
+- database lookups in form fields
+- automated reports on form submissions
 
 ## Installation
 
 In most cases, the following commands must be run with root privileges.
+
+
+### Docker
+
+Currently, Docker installations are not supported but are [under development](https://github.com/libreForms/libreForms-flask/issues/198).
 
 ### RHEL 8
 
@@ -63,9 +68,11 @@ gpgcheck=1
 enabled=1
 gpgkey=https://www.mongodb.org/static/pgp/server-6.0.asc" | tee /etc/yum.repos.d/mongodb-org-6.0.repo
 yum update -y
-yum install python3.8 python3-ldap mongodb-org -y
+yum install python3.8 mongodb-org -y
 systemctl enable --now mongod
 ```
+
+You also need to install rabbitmq-server, see https://www.rabbitmq.com/install-rpm.html.
 
 1. Download this repository into the opt directory.
 
@@ -73,16 +80,17 @@ Either download a stable release of the application.
 
 ```
 cd /opt
-wget https://github.com/signebedi/libreForms/archive/refs/tags/X.X.X.tar.gz
+wget https://github.com/libreForms/libreForms-flask/archive/refs/tags/X.X.X.tar.gz
 tar -xvf *.*.*.tar.gz
-mv libreForms-*.*.*/ libreForms/
+mv libreForms-flask-*.*.*/ libreForms/
 ```
 
 Or install the cutting-edge version of the application using Git.
 
 ```
 cd /opt
-git clone https://github.com/signebedi/libreForms.git
+git clone https://github.com/libreForms/libreForms-flask.git
+mv libreForms-flask/ libreForms/
 ```
 
 2. install Python virtual environment and initialize flask
@@ -92,7 +100,6 @@ cd /opt/libreForms
 python3.8 -m venv venv
 source venv/bin/activate
 pip install -r requirements/app.txt
-export FLASK_APP=app
 ```
 
 3. libreforms user
@@ -129,22 +136,26 @@ amazon-linux-extras install python3.8
 systemctl enable --now mongod
 ```
 
+You also need to install rabbitmq-server, see https://www.rabbitmq.com/install-rpm.html.
+
+
 1. Download this repository into the opt directory.
 
 Either download a stable release of the application.
 
 ```
 cd /opt
-wget https://github.com/signebedi/libreForms/archive/refs/tags/X.X.X.tar.gz
+wget https://github.com/libreForms/libreForms-flask/archive/refs/tags/X.X.X.tar.gz
 tar -xvf *.*.*.tar.gz
-mv libreForms-*.*.*/ libreForms/
+mv libreForms-flask-*.*.*/ libreForms/
 ```
 
 Or install the cutting-edge version of the application using Git.
 
 ```
 cd /opt
-git clone https://github.com/signebedi/libreForms.git
+git clone https://github.com/libreForms/libreForms-flask.git
+mv libreForms-flask/ libreForms/
 ```
 
 2. install Python virtual environment and initialize flask
@@ -154,7 +165,6 @@ cd /opt/libreForms
 python3.8 -m venv venv
 source venv/bin/activate
 pip install -r requirements/app.txt
-export FLASK_APP=app
 ```
 
 3. libreforms user
@@ -181,7 +191,7 @@ systemctl enable --now libreforms-celerybeat
 
 ```
 apt update -y && apt upgrade -y
-apt install -y mongodb python3-pip python3-ldap python3-venv rabbitmq-server # for the most up to date version of mongodb, see https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/
+apt install -y mongodb python3-pip python3-venv rabbitmq-server # for the most up to date version of mongodb, see https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/
 systemctl enable --now mongodb
 ```
 
@@ -191,16 +201,17 @@ Either download a stable release of the application.
 
 ```
 cd /opt
-wget https://github.com/signebedi/libreForms/archive/refs/tags/X.X.X.tar.gz
+wget https://github.com/libreForms/libreForms-flask/archive/refs/tags/X.X.X.tar.gz
 tar -xvf *.*.*.tar.gz
-mv libreForms-*.*.*/ libreForms/
+mv libreForms-flask-*.*.*/ libreForms/
 ```
 
 Or install the cutting-edge version of the application using Git.
 
 ```
 cd /opt
-git clone https://github.com/signebedi/libreForms.git
+git clone https://github.com/libreForms/libreForms-flask.git
+mv libreForms-flask/ libreForms/
 ```
 
 2. install Python virtual environment and initialize flask
@@ -210,7 +221,6 @@ cd /opt/libreForms
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements/app.txt
-export FLASK_APP=app
 ```
 
 3. libreforms user
@@ -229,6 +239,24 @@ systemctl enable --now libreforms-gunicorn
 systemctl enable --now libreforms-celery
 systemctl enable --now libreforms-celerybeat
 ```
+
+
+### hCaptcha
+
+If you'd like to install hCaptcha dependencies, run the following:
+
+```
+pip install -r requirements/hcaptcha.txt
+```
+
+### Flower
+
+If you'd like to install Flower dependencies, run the following:
+
+```
+pip install -r requirements/flower.txt
+```
+
 
 ### MongoDB
 
@@ -340,7 +368,7 @@ forms = {
 }
 ```
 
-Versions above `2.0.0` will introduce compatibility-breaking changes that are intended to simplify the abstraction layer. For more information, see the [discussion](https://github.com/signebedi/libreForms/issues/27) about these changes.
+Versions above `2.0.0` will introduce compatibility-breaking changes that are intended to simplify the abstraction layer. For more information, see the [discussion](https://github.com/libreForms/libreForms-flask/issues/27) about these changes.
 
 ### Database Lookups
 
@@ -416,18 +444,18 @@ User: libreforms
 Pass: libreforms
 ```
 
-In addition to username and password fields, the application ships by default with phone number, organization, and email fields. These can be modified by changing the fields defined in app/schema.sql and app/auth.py. Currently, there is no group-based permission sets defined, but these will be added per https://github.com/signebedi/libreForms/issues/16.
+In addition to username and password fields, the application ships by default with phone number, organization, and email fields. These can be modified by changing the fields defined in app/schema.sql and app/auth.py. Currently, there is no group-based permission sets defined, but these will be added per https://github.com/libreForms/libreForms-flask/issues/16.
 
 Anonymous registration is enabled by default but can be modified by setting config['allow_anonymous_registration'] to False. Bulk registration can be enabled by seeting config['allow_bulk_registration'] to True, which then allows logged-in users to upload a CSV of users to add at `/auth/register/bulk`.
 
 ### REST
 
-There is a RESTful API that allows users to complete read and, perhaps in the future, write operations against the MongoDB database, see discussion [here](https://github.com/signebedi/libreForms/issues/36). This requires API keys. You can create a file in the application home directory called `api_keys` structured as:
+There is a RESTful API that allows users to complete read and, perhaps in the future, write operations against the MongoDB database, see discussion [here](https://github.com/libreForms/libreForms-flask/issues/36). This requires API keys. You can create a file in the application home directory called `api_keys` structured as:
 ```
 api_keys
 YOUR_KEY_HERE
 ```
-But if you don't, the default test key will be `t32HDBcKAAIVBBPbjBADCbCh`. In the future, we may choose to manage API keys, along with signed URLs, using a database, see [here](https://github.com/signebedi/libreForms/issues/40).
+But if you don't, the default test key will be `t32HDBcKAAIVBBPbjBADCbCh`. In the future, we may choose to manage API keys, along with signed URLs, using a database, see [here](https://github.com/libreForms/libreForms-flask/issues/40).
 
 
 ### Database
@@ -469,7 +497,7 @@ If you'd like to install Let's Encrypt certificates, follow your distribution's 
 
 ## Dependencies
 
-The flask application has a few dependencies that, in its current form, may be prone to obsolescence; there is an issue in the backlog to test for, among other things, obsolete and vulnerable dependencies. In addition to the standard requirements, like MongoDB, Python3, Python3-Pip, Python3-Venv, Python3-LDAP, and Rabbit-mq (or Redis), here is a list of dependencies that ship with the application under the static/ directory:
+The flask application has a few dependencies that, in its current form, may be prone to obsolescence; there is an issue in the backlog to test for, among other things, obsolete and vulnerable dependencies. In addition to the standard requirements, like MongoDB, Python3, Python3-Pip, Python3-Venv, and Rabbit-mq (or Redis), here is a list of dependencies that ship with the application under the static/ directory:
 
 ```
 bootstrap-darkly-5.1.3.min.css
@@ -481,26 +509,16 @@ As well as the following python requirements and their dependencies:
 
 ```
 celery==5.2.7
-croniter==1.3.7
-pandas==1.4.3
-plotly==5.9.0
-Flask==2.1.2
-Flask-Admin==1.6.0
-Flask-hCaptcha==0.6.0
-Flask-Login==0.6.1
-webargs==8.1.0
+cryptography==38.0.4
+Flask==2.2.2
+Flask-Login==0.6.2
+Flask-SQLAlchemy==3.0.2
 gunicorn==20.1.0
-pymongo==4.1.1
-python-crontab==2.6.0
-SQLAlchemy==1.4.39
-```
-
-In the development requirements file, we add the following requirements:
-
-```
-Authlib==1.0.1
-Flask-Dance==6.0.0
-oauthlib==3.2.0
+pandas==1.5.2
+plotly==5.11.0
+pymongo==4.3.3
+reportlab==3.6.12
+webargs==8.2.0
 ```
 
 In the tests requirements file, we add the following requirements
@@ -509,6 +527,8 @@ In the tests requirements file, we add the following requirements
 coverage==6.4.1
 pytest==7.1.2
 ```
+
+There are also optional requirements files for hCaptcha and Flower.
 
 ## Copyright
 

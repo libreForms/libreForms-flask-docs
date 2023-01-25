@@ -257,6 +257,27 @@ If you'd like to install Flower dependencies, run the following:
 pip install -r requirements/flower.txt
 ```
 
+Then, you can start flower by enabling and starting the systemd service.
+
+
+```
+systemctl enable --now libreforms-flower
+```
+
+
+### Elasticsearch
+
+
+If you want to run Elasticsearch, you can install it on Ubuntu 20.04 as follows:
+
+```
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-7.x.list
+apt update
+apt install elasticsearch
+systemctl enable --now elasticsearch.service
+
+```
 
 ### MongoDB
 
